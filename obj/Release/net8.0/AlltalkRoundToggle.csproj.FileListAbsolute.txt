@@ -1,0 +1,28 @@
+C:\Users\Bruno\Desktop\AlltalkRoundToggle\bin\Release\net8.0\AlltalkRoundToggle.deps.json
+C:\Users\Bruno\Desktop\AlltalkRoundToggle\bin\Release\net8.0\AlltalkRoundToggle.dll
+C:\Users\Bruno\Desktop\AlltalkRoundToggle\bin\Release\net8.0\AlltalkRoundToggle.pdb
+C:\Users\Bruno\Desktop\AlltalkRoundToggle\bin\Release\net8.0\CounterStrikeSharp.API.dll
+C:\Users\Bruno\Desktop\AlltalkRoundToggle\obj\Release\net8.0\AlltalkRoundToggle.csproj.AssemblyReference.cache
+C:\Users\Bruno\Desktop\AlltalkRoundToggle\obj\Release\net8.0\AlltalkRoundToggle.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Bruno\Desktop\AlltalkRoundToggle\obj\Release\net8.0\AlltalkRoundToggle.AssemblyInfoInputs.cache
+C:\Users\Bruno\Desktop\AlltalkRoundToggle\obj\Release\net8.0\AlltalkRoundToggle.AssemblyInfo.cs
+C:\Users\Bruno\Desktop\AlltalkRoundToggle\obj\Release\net8.0\AlltalkRoundToggle.csproj.CoreCompileInputs.cache
+C:\Users\Bruno\Desktop\AlltalkRoundToggle\obj\Release\net8.0\AlltalkR.24639861.Up2Date
+C:\Users\Bruno\Desktop\AlltalkRoundToggle\obj\Release\net8.0\AlltalkRoundToggle.dll
+C:\Users\Bruno\Desktop\AlltalkRoundToggle\obj\Release\net8.0\refint\AlltalkRoundToggle.dll
+C:\Users\Bruno\Desktop\AlltalkRoundToggle\obj\Release\net8.0\AlltalkRoundToggle.pdb
+C:\Users\Bruno\Desktop\AlltalkRoundToggle\obj\Release\net8.0\ref\AlltalkRoundToggle.dll
+D:\CODE CS2\AlltalkRoundToggle\bin\Release\net8.0\AlltalkRoundToggle.deps.json
+D:\CODE CS2\AlltalkRoundToggle\bin\Release\net8.0\AlltalkRoundToggle.dll
+D:\CODE CS2\AlltalkRoundToggle\bin\Release\net8.0\AlltalkRoundToggle.pdb
+D:\CODE CS2\AlltalkRoundToggle\bin\Release\net8.0\CounterStrikeSharp.API.dll
+D:\CODE CS2\AlltalkRoundToggle\obj\Release\net8.0\AlltalkRoundToggle.csproj.AssemblyReference.cache
+D:\CODE CS2\AlltalkRoundToggle\obj\Release\net8.0\AlltalkRoundToggle.GeneratedMSBuildEditorConfig.editorconfig
+D:\CODE CS2\AlltalkRoundToggle\obj\Release\net8.0\AlltalkRoundToggle.AssemblyInfoInputs.cache
+D:\CODE CS2\AlltalkRoundToggle\obj\Release\net8.0\AlltalkRoundToggle.AssemblyInfo.cs
+D:\CODE CS2\AlltalkRoundToggle\obj\Release\net8.0\AlltalkRoundToggle.csproj.CoreCompileInputs.cache
+D:\CODE CS2\AlltalkRoundToggle\obj\Release\net8.0\AlltalkR.24639861.Up2Date
+D:\CODE CS2\AlltalkRoundToggle\obj\Release\net8.0\AlltalkRoundToggle.dll
+D:\CODE CS2\AlltalkRoundToggle\obj\Release\net8.0\refint\AlltalkRoundToggle.dll
+D:\CODE CS2\AlltalkRoundToggle\obj\Release\net8.0\AlltalkRoundToggle.pdb
+D:\CODE CS2\AlltalkRoundToggle\obj\Release\net8.0\ref\AlltalkRoundToggle.dll
