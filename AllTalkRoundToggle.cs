@@ -1,121 +1,158 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.IO;
-using CounterStrikeSharp.API.Modules.Cvars;
-using CounterStrikeSharp.API.Core;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using CounterStrikeSharp.API;
+using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Modules.Cvars;
+using Microsoft.Extensions.Logging;
 
 namespace alltalkRoundToggle
 {
     public class AllTalkRoundToggle : BasePlugin
     {
+        private const VoiceFlags AllTalkFlags = VoiceFlags.All | VoiceFlags.ListenAll;
+        private readonly Dictionary<int, VoiceFlags> _originalVoiceFlags = new();
+        private (ConVar Variable, string OriginalValue)[] _voiceConVars = [];
+        private bool _roundEnded;
+
         public override string ModuleName => "Alltalk Round Toggle";
         public override string ModuleAuthor => "brun0z";
         public override string ModuleDescription => "Alltalk Match: ON at the end of the round and OFF at the start";
-        public override string ModuleVersion => "1.0.0";
-
-        ConVar? sv_alltalk = null!;
-        ConVar? sv_deadtalk = null!;
-        ConVar? sv_full_alltalk = null!;
-        ConVar? sv_talk_enemy_dead = null!;
-        ConVar? sv_talk_enemy_living = null!;
-
-        ConfigInfo _config = new();
+        public override string ModuleVersion => "1.1.0";
 
         public override void Load(bool hotReload)
         {
-            _config = CreateOrLoadConfig();
-
-            if (!_config.GeneralConfig!.Enabled)
+            ConfigInfo config = CreateOrLoadConfig();
+            if (!config.GeneralConfig.Enabled)
             {
-                Console.WriteLine("[AlltalkRoundToggle] Plugin not enabled!");
+                Logger.LogInformation("AlltalkRoundToggle is disabled by configuration");
                 return;
             }
 
-            sv_alltalk = ConVar.Find("sv_alltalk");
-            sv_deadtalk = ConVar.Find("sv_deadtalk");
-            sv_full_alltalk = ConVar.Find("sv_full_alltalk");
-            sv_talk_enemy_dead = ConVar.Find("sv_talk_enemy_dead");
-            sv_talk_enemy_living = ConVar.Find("sv_talk_enemy_living");
+            string[] voiceConVarNames = ["sv_alltalk", "sv_deadtalk", "sv_full_alltalk", "sv_talk_enemy_dead", "sv_talk_enemy_living"];
+            (ConVar Variable, string OriginalValue)[] voiceConVars = new (ConVar Variable, string OriginalValue)[voiceConVarNames.Length];
+            for (int index = 0; index < voiceConVarNames.Length; index++)
+            {
+                string name = voiceConVarNames[index];
+                ConVar variable = ConVar.Find(name)
+                    ?? throw new InvalidOperationException($"CS2 voice convar '{name}' was not found; verify the game server and CounterStrikeSharp versions.");
+                voiceConVars[index] = (variable, variable.StringValue);
+            }
+            _voiceConVars = voiceConVars;
 
-            RegisterEventHandler<EventRoundStart>(OnRoundStart);
-            RegisterEventHandler<EventRoundEnd>(OnRoundEnd);
+            RegisterEventHandler<EventRoundStart>(OnRoundStart, HookMode.Post);
+            RegisterEventHandler<EventRoundEnd>(OnRoundEnd, HookMode.Post);
+            RegisterEventHandler<EventPlayerConnectFull>(OnPlayerConnectFull, HookMode.Post);
 
-            Console.WriteLine("[AlltalkRoundToggle] Plugin loaded successfully!");
+            Logger.LogInformation("AlltalkRoundToggle loaded");
+        }
+
+        public override void Unload(bool hotReload)
+        {
+            RestoreVoiceFlags();
+            foreach ((ConVar variable, string originalValue) in _voiceConVars)
+            {
+                variable.StringValue = originalValue;
+            }
         }
 
         private HookResult OnRoundStart(EventRoundStart @event, GameEventInfo info)
         {
-            if (!_config.GeneralConfig!.Enabled) return HookResult.Continue;
-
-            sv_alltalk?.SetValue(false);
-            sv_deadtalk?.SetValue(false);
-            sv_full_alltalk?.SetValue(false);
-            sv_talk_enemy_dead?.SetValue(false);
-            sv_talk_enemy_living?.SetValue(false);
-
-            Console.WriteLine("[AlltalkRoundToggle] Round Start -> Alltalk OFF");
-
+            _roundEnded = false;
+            RestoreVoiceFlags();
+            foreach ((ConVar variable, _) in _voiceConVars)
+            {
+                variable.SetValue(false);
+            }
+            Logger.LogInformation("Round started; all talk disabled");
             return HookResult.Continue;
         }
 
         private HookResult OnRoundEnd(EventRoundEnd @event, GameEventInfo info)
         {
-            if (!_config.GeneralConfig!.Enabled) return HookResult.Continue;
+            _roundEnded = true;
+            foreach ((ConVar variable, _) in _voiceConVars)
+            {
+                variable.SetValue(true);
+            }
+            foreach (CCSPlayerController player in Utilities.GetPlayers())
+            {
+                EnableAllTalk(player);
+            }
 
-            sv_alltalk?.SetValue(true);
-            sv_deadtalk?.SetValue(true);
-            sv_full_alltalk?.SetValue(true);
-            sv_talk_enemy_dead?.SetValue(true);
-            sv_talk_enemy_living?.SetValue(true);
+            Logger.LogInformation("Round ended; all talk enabled");
+            return HookResult.Continue;
+        }
 
-            Console.WriteLine("[AlltalkRoundToggle] Round End -> Alltalk ON");
+        private HookResult OnPlayerConnectFull(EventPlayerConnectFull @event, GameEventInfo info)
+        {
+            if (_roundEnded && @event.Userid is { IsValid: true } player)
+            {
+                EnableAllTalk(player);
+            }
 
             return HookResult.Continue;
         }
 
-        private ConfigInfo CreateOrLoadConfig()
+        private void EnableAllTalk(CCSPlayerController player)
         {
-            var configDirectory = Path.Join(ModuleDirectory, "AlltalkRoundToggle.json");
-            if (!File.Exists(configDirectory))
-            {
-                string newJson = GenerateNewConfig();
-                File.WriteAllText(configDirectory, newJson);
-                return JsonSerializer.Deserialize<ConfigInfo>(newJson)!;
-            }
-
-            string json = File.ReadAllText(configDirectory);
-            return JsonSerializer.Deserialize<ConfigInfo>(json)!;
+            int userId = player.UserId ?? throw new InvalidOperationException("Connected player has no user ID; cannot enable all talk.");
+            _originalVoiceFlags.TryAdd(userId, player.VoiceFlags);
+            player.VoiceFlags |= AllTalkFlags;
         }
 
-        private string GenerateNewConfig()
+        private void RestoreVoiceFlags()
         {
-            var jObject = new JsonObject
+            foreach (CCSPlayerController player in Utilities.GetPlayers())
             {
-                ["General"] = new JsonObject
+                if (player.UserId is int userId && _originalVoiceFlags.TryGetValue(userId, out VoiceFlags original))
                 {
-                    ["Enabled"] = true
+                    player.VoiceFlags = (player.VoiceFlags & ~AllTalkFlags) | (original & AllTalkFlags);
                 }
-            };
+            }
 
-            string json = JsonSerializer.Serialize(jObject, new JsonSerializerOptions
+            _originalVoiceFlags.Clear();
+        }
+
+        private ConfigInfo CreateOrLoadConfig()
+        {
+            string configPath = Path.Join(ModuleDirectory, "AlltalkRoundToggle.json");
+            if (!File.Exists(configPath))
             {
-                WriteIndented = true
-            });
+                File.WriteAllText(configPath, "{\n  \"General\": {\n    \"Enabled\": true\n  }\n}");
+            }
 
-            return json;
+            string json = File.ReadAllText(configPath);
+            ConfigInfo config;
+            try
+            {
+                config = JsonSerializer.Deserialize<ConfigInfo>(json)
+                    ?? throw new InvalidDataException($"Configuration file '{configPath}' is empty.");
+            }
+            catch (JsonException ex)
+            {
+                throw new InvalidDataException($"Invalid configuration file '{configPath}': {ex.Message}", ex);
+            }
+
+            if (config.GeneralConfig is null)
+            {
+                throw new InvalidDataException($"Configuration file '{configPath}' must contain a General section.");
+            }
+
+            return config;
         }
 
         public class ConfigInfo
         {
             [JsonPropertyName("General")]
-            public GeneralConfig? GeneralConfig { get; set; }
+            public required GeneralConfig GeneralConfig { get; init; }
         }
 
         public class GeneralConfig
         {
-            public bool Enabled { get; set; }
+            public required bool Enabled { get; init; }
         }
     }
 }
